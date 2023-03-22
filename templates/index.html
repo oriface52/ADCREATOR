@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenAI Flask App</title>
+    
+    <script src="script.js"></script>
+
+    <style>
+        /* Grid Layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 0.95fr);
+            grid-template-rows: repeat(2, 0.95fr);
+            gap: 10px;
+            grid-template-areas:
+                "part1 part2"
+                "part3 part4"
+                "part5 part5";
+        }
+        .part1 {
+            grid-area: part1;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .part2 {
+            grid-area: part2;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .part3 {
+            grid-area: part3;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .part4 {
+            grid-area: part4;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .part5 {
+            grid-area: part5;
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .part6 {
+            grid-area: part5;
+            background-color: #fff;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Form Style */
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="file"],
+        textarea {
+            margin-bottom: 10px;
+            border-radius: 5px;ㄴ
+            border: 1px solid #ccc;
+            padding: 5px;
+            width: 50%;
+            font-size: 16px;
+            font-family: 'Arial', sans-serif;
+            display: inline-block;
+            resize: none;
+        }
+        input[type="submit"],
+        button {
+            background-color: #2E64FE;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative ;
+            left: 16%;
+        }
+        input[type="submit"]:hover,
+        button:hover {
+            background-color: #0404B4;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            position: relative ;
+            left: 20%;
+        }
+        img {
+        display: block;
+        margin: 0 auto;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative ;
+            right: 15%;
+        }
+        .button-container button {
+            margin: 10px;
+        }
+
+        /* Error Message */
+        #error-message {
+            color: #ff0000;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        /* Miscellaneous */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        p {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <p><h1>Ad Creator with Inpainting</h1></p>
+    <div class="grid-container">
+        <div class="part1">
+            <div style="font-size: 20px;"><b>광고 텍스트 생성</b></div><br>
+            <div style="font-size: 13px;">비즈보드 좌측에 위치할 텍스트를 생성합니다.<br>
+            원하는 키워드를 입력한 뒤 버튼을 눌러 광고 텍스트를 생성하세요.</div><br><br>
+            <form id="generate-form" action="/generate" method="POST">
+                <label for="input">Prompt:</label>
+                <textarea name="input" id="input" rows="1" cols="20">5자 이내 광고 카피 1개 생성</textarea>
+                <br>
+                <label for="input">Keyword:</label>
+                <textarea name="input" id="input" rows="1" cols="20" placeholder="광고 상품을 입력하세요"></textarea>
+                <textarea name="input" id="input" rows="1" cols="20" placeholder="광고 상품의 특징을 입력하세요"></textarea>
+                <textarea name="input" id="input" rows="1" cols="20" placeholder="광고 상품의 특징을 입력하세요"></textarea>
+                <br><br>
+                <button type="submit">Generate Text</button>
+            </form>
+        </div>
+        <div class="part2">
+            <div style="font-size: 20px;"><b>오브젝트 이미지 생성</b></div><br>
+            <div style="font-size: 13px;">원본 이미지를 활용하여 비즈보드 우측에 위치할 이미지를 새롭게 생성합니다.<br>
+            - image: 원본 이미지 / mask: 편집할 부분을 표시한 원본 이미지 / prompt text: 편집해 넣을 이미지를 묘사하는 제시어
+            </div><br><br>
+            <form id="inpainting-form" action="/inpainting" method="POST" enctype="multipart/form-data">
+                <label for="image">Image(2048x2048 이하 1:1):</label>
+                <input type="file" name="image" id="image">
+                <label for="mask">Mask(2048x2048 이하 1:1):</label>
+                <input type="file" name="mask" id="mask">
+                <br>
+                <label for="text">Prompt Text:</label>
+                <textarea name="text" id="text" rows="1" cols="30" placeholder="','을 활용하여 키워드를 영문으로 입력해주세요"></textarea>
+                <br><br>
+                <button type="submit">Create Image</button>
+            </form>
+        </div>
+        <div class="part3">
+            <div style="font-size: 20px;"><b>텍스트 결과</b></div><br>
+            <div style="font-size: 13px;">적합한 광고 텍스트가 나올 때까지 시도할 수 있습니다.</div><br><br>
+            <br>
+            {% if 'text_choices' in session %}
+                {% for sentence in session['text_choices'].split('\n') %}
+                    <p id="generated-sentence">{{ sentence }}</p>
+                    <br><br><br><br>
+                    <div class="button-container">
+                        <button onclick="location.reload(true)">Regenerate</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="part4">
+            <div style="font-size: 20px;"><b>이미지 결과</b></div><br>
+            <div style="font-size: 13px;">적합한 오브젝트 이미지가 나올 때까지 시도할 수 있습니다.</div><br><br>
+            {% if banner_image %}
+            <img style="border-radius: 15px; border: 2px solid #FAFAFA;" src="data:image/png;base64,{{ banner_image }}" alt="Bizboard Ad Banner" width="80%"> 
+            <br><br>
+            <div class="button-container">
+            <button onclick="location.reload(true)">Regenerate</button>
+            <button type="submit" onclick="downloadImage()">Download</button>
+            </div>
+            {% endif %}
+        </div>
+        <script>
+        function downloadImage() {
+            var imgSrc = document.querySelector('img').src;
+            var link = document.createElement('a');
+            link.href = imgSrc;
+            link.download = 'banner.png';
+            link.click();
+        }
+        </script>       
+    </div>
+
+
+    <!-- Error Message -->
+    <div id="error-message"></div>
+
+    <script>
+        /* Display error message */
+        {% if error %}
+            document.getElementById("error-message").innerHTML = "{{ error }}";
+        {% endif %}
+    </script>
+</body>
+</html>
+
